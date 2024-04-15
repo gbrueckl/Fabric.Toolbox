@@ -10,7 +10,7 @@ def get_execution_plan(df: DataFrame) -> str:
     return plan
 
 
-class Node:
+class PlanNode:
     plan_type: str
     level: int
     line: str
@@ -34,12 +34,21 @@ class Node:
     node_matching_text: str
 
     def __init__(self, line, line_number, plan_type):
+        if line.startswith("*"): # replace whole-stage code gen prefix
+            line = re.sub('([^*]*)\*\([0-9]*\)\s(.*)', r'\1\2', line)
+
         self.line = line
         self.line_number = line_number
-        self.level = int(re.search(r"[A-Z]", line).start() / 3)
         self.plan_type = plan_type
 
+        self.level = self.get_level()
+
         self.parent = None
+
+        self.populate_fields()
+
+    def populate_fields(self):
+        
         self.text = self.get_text()
         
         self.identifier = self.get_identifier()
@@ -56,6 +65,9 @@ class Node:
 
         self.node_matching_text = self.get_node_matching_text()
 
+    def get_level(self) -> int:
+        return int(re.search(r'[A-Z]', self.line).start() / 3)
+
     def get_parent(self, skip_ops: list[str] = []):
         if not self.parent:
             return None
@@ -70,11 +82,12 @@ class Node:
         return str(self.line_number)
 
     def get_operation(self) -> str:
-        m = re.search('^[:\s+-]*(.*?)[\(),\s]', self.line)
+        #m = re.search('^[:\s+-]*(.*?)[\(),\s]', self.line)
+        m = re.search('([A-Za-z]+)', self.line)
         if m:
             return m.group(1)
         else:
-            return None
+            return self.line
 
     def get_sub_operation(self) -> str:
         m = re.search('^[:\s+-]*([A-Za-z]+)\s([A-Za-z]+)', self.line)
@@ -166,9 +179,7 @@ class Node:
             return self.table
         if self.operation == "Filter":
             return self.text.split(',')[0]
-
-
-def execution_plan_to_nodes(exec_plan: str, plan_type: str = "combined") -> list[Node]:
+def execution_plan_to_nodes(exec_plan: str, plan_type: str = "combined") -> list[PlanNode]:
     assert plan_type in ["logical", "physical", "combined"]
     
     if plan_type == "combined":
@@ -191,7 +202,7 @@ def execution_plan_to_nodes(exec_plan: str, plan_type: str = "combined") -> list
     line_number = 1
     capture_started = False
     for line in lines:          
-        node = Node(line, line_number, plan_type)
+        node = PlanNode(line, line_number, plan_type)
         line_number += 1
 
         if line.startswith("==") and line.endswith("=="):
@@ -216,14 +227,14 @@ def execution_plan_to_nodes(exec_plan: str, plan_type: str = "combined") -> list
         
         parent = next((nd for nd in reversed(nodes) if nd.level == node.level - 1), None)
         node.parent = parent
+        node.populate_fields()
 
         nodes.append(node)
 
     return nodes
 
-
 # https://graphviz.readthedocs.io/en/stable/examples.html
-def show_exec_plan_from_nodes(nodes: list[Node], skip_operations: list[str] = []):
+def show_exec_plan_from_nodes(nodes: list[PlanNode], skip_operations: list[str] = []):
     g = Digraph(name="Execution Plan", comment='Execution Plan')
 
     g.attr(label=r'Execution Plan\nSizes are estimates based on table statistics\nThey are not reliable anymore after joins are involved!')
@@ -256,3 +267,6 @@ def visualize_execution_plan(df: DataFrame, skip_operations: list[str] = []):
     exec_plan = get_execution_plan(df)
     nodes = execution_plan_to_nodes(exec_plan)
     show_exec_plan_from_nodes(nodes, skip_operations)
+
+def show_plan(df: DataFrame, skip_operations: list[str] = []):
+    visualize_execution_plan(df, skip_operations)
