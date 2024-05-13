@@ -286,8 +286,9 @@ def get_plan_viz_html(df: DataFrame, skip_operations: list[str] = [], image_form
     return plan_viz.pipe().decode()
 
 
-def show_plan(df: DataFrame, displayHTML, skip_operations: list[str] = [], image_format: str = 'svg'):
-    # a simple display() does not work in Databricks
-    #display(g)
-            
-    displayHTML(get_plan_viz_html(df, skip_operations, image_format))
+def show_plan(df: DataFrame, displayHTML = None, skip_operations: list[str] = [], image_format: str = 'svg'):
+    if displayHTML == None:
+        # a simple display() might not work in Databricks
+        display(get_plan_viz(df, skip_operations))
+    else:
+        displayHTML(get_plan_viz_html(df, skip_operations, image_format))
