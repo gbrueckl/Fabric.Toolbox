@@ -3,6 +3,14 @@ import re, contextlib, io, math
 from graphviz import Digraph
 from IPython.display import SVG
 
+# to work with Fabric
+if "notebookutils" in locals():
+    from notebookutils.visualization.displayHTML import displayHTML
+
+# to work with Databricks
+if "dbutils" in locals():
+    from dbruntime.display import displayHTML
+
 def get_execution_plan(df: DataFrame) -> str:
     with contextlib.redirect_stdout(io.StringIO()) as stdout:
         df.explain(mode="cost")
@@ -275,7 +283,7 @@ def show_exec_plan_from_nodes(nodes: list[PlanNode], skip_operations: list[str] 
     with open(f"graph_output.{g.format}", 'r') as file:
         svg_data = file.read()
         
-    displayHTML((svg_data))
+    displayHTML(svg_data)
 
 
 def visualize_execution_plan(df: DataFrame, skip_operations: list[str] = []):
