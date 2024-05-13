@@ -5,10 +5,12 @@ from IPython.display import SVG
 
 # to work with Fabric
 if "notebookutils" in locals():
+    print("Importing 'displayHTML' from notebookutils.visualization.displayHTML ...")
     from notebookutils.visualization.displayHTML import displayHTML
 
 # to work with Databricks
 if "dbutils" in locals():
+    print("Importing 'displayHTML' from databricks.sdk.runtime ...")
     from databricks.sdk.runtime import displayHTML
 
 def get_execution_plan(df: DataFrame) -> str:
