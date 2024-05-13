@@ -313,3 +313,18 @@ def get_plan_viz(df: DataFrame, skip_operations: list[str] = []):
     plan_viz = get_exec_plan_from_nodes(nodes, skip_operations)
 
     return plan_viz
+
+def get_plan_viz_html(df: DataFrame, skip_operations: list[str] = []):
+    plan_viz = get_plan_viz(df, skip_operations)
+
+    # Set the format to 'svg'
+    plan_viz.format = 'svg'
+    
+    # Render the graph to SVG
+    plan_viz.render('__graph_output', view=False)
+    
+    # Read the SVG data from the file and display it in the notebook
+    with open(f"__graph_output.{plan_viz.format}", 'r') as file:
+        svg_data = file.read()
+
+    return svg_data
