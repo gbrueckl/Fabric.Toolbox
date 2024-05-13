@@ -5,22 +5,6 @@ from IPython.display import SVG
 
 print("Loading VisualizeExecutionPlan library ...")
 
-print("Checking locals() ...")
-print([x for x in locals()])
-
-# to work with Fabric
-if "mssparkutils" in locals():
-    print("Importing 'displayHTML' from notebookutils.visualization.displayHTML ...")
-    from notebookutils.visualization.displayHTML import displayHTML
-
-# to work with Databricks
-elif "dbutils" in locals():
-    print("Importing 'displayHTML' from databricks.sdk.runtime ...")
-    from databricks.sdk.runtime import displayHTML
-
-else:
-    print("Could not validate whehter you are running on MS Fabric or Databricks!")
-
 def get_execution_plan(df: DataFrame) -> str:
     with contextlib.redirect_stdout(io.StringIO()) as stdout:
         df.explain(mode="cost")
