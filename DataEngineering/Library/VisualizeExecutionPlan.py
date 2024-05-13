@@ -5,8 +5,9 @@ from IPython.display import SVG
 
 print("Loading VisualizeExecutionPlan library ...")
 
+
 # to work with Fabric
-if "notebookutils" in locals():
+if "mssparkutils" in locals():
     print("Importing 'displayHTML' from notebookutils.visualization.displayHTML ...")
     from notebookutils.visualization.displayHTML import displayHTML
 
