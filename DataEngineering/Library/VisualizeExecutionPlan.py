@@ -1,6 +1,7 @@
 from pyspark.sql import DataFrame
 import re, contextlib, io, math
 from graphviz import Digraph
+from IPython.display import SVG
 
 def get_execution_plan(df: DataFrame) -> str:
     with contextlib.redirect_stdout(io.StringIO()) as stdout:
@@ -99,9 +100,10 @@ class PlanNode:
             return self.get_operation()
 
     def get_table(self) -> str:
-        m = re.search('spark_catalog\.([a-z0-9-_]*)\.([a-z0-9-_]*)', self.line)
+        m = re.search('([a-z0-9-_]*)\.([a-z0-9-_]*)\.([a-z0-9-_]*)', self.line)
         if m:
-            return f"{m.group(1)}.{m.group(2)}"
+            #return f"{m.group(1)}.{m.group(2)}.{m.group(3)}"
+            return f"{m.group(2)}.{m.group(3)}"
         else:
             return None
 
@@ -179,6 +181,8 @@ class PlanNode:
             return self.table
         if self.operation == "Filter":
             return self.text.split(',')[0]
+
+
 def execution_plan_to_nodes(exec_plan: str, plan_type: str = "combined") -> list[PlanNode]:
     assert plan_type in ["logical", "physical", "combined"]
     
@@ -259,8 +263,19 @@ def show_exec_plan_from_nodes(nodes: list[PlanNode], skip_operations: list[str] 
         if node.get_parent(skip_operations):
             g.edge(node.identifier, node.get_parent(skip_operations).identifier, node.edge_label, tooltip=node.edge_tooltip )
 
-
-    display(g)
+    # a simple display() does not work in Databricks
+    #display(g)
+    # Set the format to 'svg'
+    g.format = 'svg'
+    
+    # Render the graph to SVG
+    g.render('graph_output', view=False)
+    
+    # Read the SVG data from the file and display it in the notebook
+    with open(f"graph_output.{g.format}", 'r') as file:
+        svg_data = file.read()
+        
+    displayHTML((svg_data))
 
 
 def visualize_execution_plan(df: DataFrame, skip_operations: list[str] = []):
