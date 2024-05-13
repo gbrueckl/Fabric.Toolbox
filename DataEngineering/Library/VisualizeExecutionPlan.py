@@ -1,7 +1,6 @@
 from pyspark.sql import DataFrame
 import re, contextlib, io, math
 from graphviz import Digraph
-from IPython.display import SVG
 
 print("Loading VisualizeExecutionPlan library ...")
 
