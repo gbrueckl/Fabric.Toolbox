@@ -257,7 +257,7 @@ def execution_plan_to_nodes(exec_plan: str, plan_type: str = "combined") -> list
 
 
 # https://graphviz.readthedocs.io/en/stable/examples.html
-def get_exec_plan_from_nodes(nodes: list[PlanNode], skip_operations: list[str] = []):
+def get_graph_from_nodes(nodes: list[PlanNode], skip_operations: list[str] = []):
     g = Digraph(name="Execution Plan", comment='Execution Plan')
 
     g.attr(label=r'Execution Plan\nSizes are estimates based on table statistics\nThey are not reliable anymore after joins are involved!')
@@ -285,46 +285,25 @@ def get_exec_plan_from_nodes(nodes: list[PlanNode], skip_operations: list[str] =
     return g
 
 
-def visualize_execution_plan(df: DataFrame, skip_operations: list[str] = []):
-    exec_plan = get_execution_plan(df)
-    nodes = execution_plan_to_nodes(exec_plan)
-    plan_viz = get_exec_plan_from_nodes(nodes, skip_operations)
-
-    # a simple display() does not work in Databricks
-    #display(g)
-    # Set the format to 'svg'
-    plan_viz.format = 'svg'
-    
-    # Render the graph to SVG
-    plan_viz.render('graph_output', view=False)
-    
-    # Read the SVG data from the file and display it in the notebook
-    with open(f"graph_output.{plan_viz.format}", 'r') as file:
-        svg_data = file.read()
-        
-    displayHTML(svg_data)
-
-def show_plan(df: DataFrame, skip_operations: list[str] = []):
-    visualize_execution_plan(df, skip_operations)
-
 def get_plan_viz(df: DataFrame, skip_operations: list[str] = []):
     exec_plan = get_execution_plan(df)
     nodes = execution_plan_to_nodes(exec_plan)
-    plan_viz = get_exec_plan_from_nodes(nodes, skip_operations)
+    plan_viz = get_graph_from_nodes(nodes, skip_operations)
 
     return plan_viz
 
-def get_plan_viz_html(df: DataFrame, skip_operations: list[str] = []):
+
+def get_plan_viz_html(df: DataFrame, skip_operations: list[str] = [], image_format: str = 'svg'):
     plan_viz = get_plan_viz(df, skip_operations)
 
     # Set the format to 'svg'
-    plan_viz.format = 'svg'
-    
-    # Render the graph to SVG
-    plan_viz.render('__graph_output', view=False)
-    
-    # Read the SVG data from the file and display it in the notebook
-    with open(f"__graph_output.{plan_viz.format}", 'r') as file:
-        svg_data = file.read()
+    plan_viz.format = image_format
 
-    return svg_data
+    return plan_viz.pipe().decode()
+
+
+def show_plan(df: DataFrame, displayHTML, skip_operations: list[str] = [], image_format: str = 'svg'):
+    # a simple display() does not work in Databricks
+    #display(g)
+            
+    displayHTML(get_plan_viz_html(df, skip_operations, image_format))
