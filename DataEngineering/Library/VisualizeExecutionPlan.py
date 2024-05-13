@@ -107,7 +107,7 @@ class PlanNode:
 
     def get_size_in_bytes(self) -> int:
         # from https://semyonsinchenko.github.io/ssinchenko/post/estimation-spark-df-size/
-        m = re.search('sizeInBytes\s*=\s*([0-9.]*)\s(.*?)\)', self.line)
+        m = re.search('sizeInBytes\s*=\s*([0-9.]*)\s(.*?)[),]', self.line)
         if m:
             size = float(m.group(1))
             units = m.group(2)
