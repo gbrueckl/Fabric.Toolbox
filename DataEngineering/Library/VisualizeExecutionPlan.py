@@ -5,6 +5,8 @@ from IPython.display import SVG
 
 print("Loading VisualizeExecutionPlan library ...")
 
+print("Checking locals() ...")
+print([x for x in locals()])
 
 # to work with Fabric
 if "mssparkutils" in locals():
