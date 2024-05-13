@@ -9,7 +9,7 @@ if "notebookutils" in locals():
 
 # to work with Databricks
 if "dbutils" in locals():
-    from dbruntime.display import displayHTML
+    from databricks.sdk.runtime import displayHTML
 
 def get_execution_plan(df: DataFrame) -> str:
     with contextlib.redirect_stdout(io.StringIO()) as stdout:
