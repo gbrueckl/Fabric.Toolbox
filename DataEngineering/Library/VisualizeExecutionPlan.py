@@ -3,15 +3,20 @@ import re, contextlib, io, math
 from graphviz import Digraph
 from IPython.display import SVG
 
+print("Loading VisualizeExecutionPlan library ...")
+
 # to work with Fabric
 if "notebookutils" in locals():
     print("Importing 'displayHTML' from notebookutils.visualization.displayHTML ...")
     from notebookutils.visualization.displayHTML import displayHTML
 
 # to work with Databricks
-if "dbutils" in locals():
+elif "dbutils" in locals():
     print("Importing 'displayHTML' from databricks.sdk.runtime ...")
     from databricks.sdk.runtime import displayHTML
+
+else:
+    print("Could not validate whehter you are running on MS Fabric or Databricks!")
 
 def get_execution_plan(df: DataFrame) -> str:
     with contextlib.redirect_stdout(io.StringIO()) as stdout:
@@ -247,8 +252,9 @@ def execution_plan_to_nodes(exec_plan: str, plan_type: str = "combined") -> list
 
     return nodes
 
+
 # https://graphviz.readthedocs.io/en/stable/examples.html
-def show_exec_plan_from_nodes(nodes: list[PlanNode], skip_operations: list[str] = []):
+def get_exec_plan_from_nodes(nodes: list[PlanNode], skip_operations: list[str] = []):
     g = Digraph(name="Execution Plan", comment='Execution Plan')
 
     g.attr(label=r'Execution Plan\nSizes are estimates based on table statistics\nThey are not reliable anymore after joins are involved!')
@@ -273,25 +279,34 @@ def show_exec_plan_from_nodes(nodes: list[PlanNode], skip_operations: list[str] 
         if node.get_parent(skip_operations):
             g.edge(node.identifier, node.get_parent(skip_operations).identifier, node.edge_label, tooltip=node.edge_tooltip )
 
-    # a simple display() does not work in Databricks
-    #display(g)
-    # Set the format to 'svg'
-    g.format = 'svg'
-    
-    # Render the graph to SVG
-    g.render('graph_output', view=False)
-    
-    # Read the SVG data from the file and display it in the notebook
-    with open(f"graph_output.{g.format}", 'r') as file:
-        svg_data = file.read()
-        
-    displayHTML(svg_data)
+    return g
 
 
 def visualize_execution_plan(df: DataFrame, skip_operations: list[str] = []):
     exec_plan = get_execution_plan(df)
     nodes = execution_plan_to_nodes(exec_plan)
-    show_exec_plan_from_nodes(nodes, skip_operations)
+    plan_viz = get_exec_plan_from_nodes(nodes, skip_operations)
+
+    # a simple display() does not work in Databricks
+    #display(g)
+    # Set the format to 'svg'
+    plan_viz.format = 'svg'
+    
+    # Render the graph to SVG
+    plan_viz.render('graph_output', view=False)
+    
+    # Read the SVG data from the file and display it in the notebook
+    with open(f"graph_output.{plan_viz.format}", 'r') as file:
+        svg_data = file.read()
+        
+    displayHTML(svg_data)
 
 def show_plan(df: DataFrame, skip_operations: list[str] = []):
     visualize_execution_plan(df, skip_operations)
+
+def get_plan_viz(df: DataFrame, skip_operations: list[str] = []):
+    exec_plan = get_execution_plan(df)
+    nodes = execution_plan_to_nodes(exec_plan)
+    plan_viz = get_exec_plan_from_nodes(nodes, skip_operations)
+
+    return plan_viz
