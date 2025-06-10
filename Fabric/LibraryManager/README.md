@@ -1,1 +1,3 @@
 # LibraryManager for Microsoft Fabric Data Engineering
+
+This notebook allows you to specify a set of notebooks from the current workspace to be bundled into a library. This library is stored in the `/Files` section of a lakehouse. Additionally a new notebook is created in the workspace called `load_LibraryManager` which you can call from main notebook to load the LibraryManager and all its libraries into the current notebook session
