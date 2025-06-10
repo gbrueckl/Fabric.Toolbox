@@ -64,29 +64,19 @@ if not _is_sc_addPyFile:
 
 # CELL ********************
 
-ABC = "ABC"
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
 if _is_sc_addPyFile:
+    # as our library makes calls to spark, we need to create local instances of SparkContext "sc" and Sparksession "spark"
     if not "sc" in locals():
-        print("Creating local SparkContext variable 'sc' ... ", end = "")
+        #print("Creating local SparkContext variable 'sc' ... ", end = "")
         sc = SparkContext.getOrCreate()
-        print("Done!")
+        #print("Done!")
 
     if not "spark" in locals():
-        print("Creating local SparkSession variable 'spark' ... ", end = "")
+        #print("Creating local SparkSession variable 'spark' ... ", end = "")
         spark = (SparkSession(sc)
             .builder
             .getOrCreate())
-        print("Done!")
+        #print("Done!")
 
 # METADATA ********************
 
@@ -101,17 +91,6 @@ def table_to_df(table_name: str) -> DataFrame:
     df = spark.sql(f"SELECT * FROM {table_name}")
 
     return df
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-XYZ = "XYZ"
 
 # METADATA ********************
 
