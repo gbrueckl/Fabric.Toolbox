@@ -23,27 +23,7 @@
 # MARKDOWN ********************
 
 # # Fabric Library Manager
-# This notebook allows you to specify a set of notebooks from the current workspace to be bundled into a library. This library is stored in the `/Files` section of a lakehouse and can then be added to a notebook using `sc.addPyFile()`
-# 
-# ```python
-# LIBRARY_FOLDER = "/Libraries"
-# LIBRARY_LAKEHOUSE_NAME = "SomeLakehouse"
-# LIBRARYMANAGER_NAME = "LibraryManager.zip"
-# 
-# LIBRARY_LAKEHOUSE = mssparkutils.lakehouse.get(LIBRARY_LAKEHOUSE_NAME)
-# 
-# library_path = f"{LIBRARY_LAKEHOUSE['properties']['abfsPath']}/Files{LIBRARY_FOLDER}/{LIBRARYMANAGER_NAME}"
-# print(f"Loading {LIBRARYMANAGER_NAME} from '{library_path}' ...")
-# sc.addPyFile(library_path)
-# 
-# # the LibraryManager can be imported as needed
-# from LibraryManager import *
-# import LibraryManager as lm
-# from LibraryManager.MyLibrary import my_function
-# ```
-# 
-# It is recommended to put the above code into a separate notebook which is then added to the actual notebook(s) using `%run`. This way the above code does not need to be duplicated across all notebooks.
-
+# This notebook allows you to specify a set of notebooks from the current workspace to be bundled into a library. This library is stored in the `/Files` section of a lakehouse. Additionally a new notebook is created in the workspace called `load_LibraryManager` which you can call from main notebook to load the LibraryManager and all its libraries into the current notebook session
 
 # MARKDOWN ********************
 
@@ -59,7 +39,7 @@ import time
 import json
 import requests
 
-from notebookutils import mssparkutils
+import notebookutils
 from sempy.fabric import FabricRestClient
 
 # METADATA ********************
@@ -95,15 +75,16 @@ library_notebooks = [
 
 # CELL ********************
 
-RUNTIME_CONTEXT = {k:v for k,v in mssparkutils.runtime.context.items() if v is not None}
+RUNTIME_CONTEXT = {k:v for k,v in notebookutils.runtime.context.items() if v is not None}
 
-LIBRARY_FOLDER = "/Libraries"
-LIBRARY_NAME = "LibraryManager" # must be a zip-file
+LIBRARY_FOLDER = "/Libraries" # must start with "/"
+LIBRARY_NAME = "LibraryManager"
 LIBRARY_LAKEHOUSE_NAME = "SomeLakehouse"
-LIBRARY_IMPORT = f"from {LIBRARY_NAME} import *"
+LIBRARY_IMPORT = f"from {LIBRARY_NAME} import *" # could also be a named import
+# LIBRARY_IMPORT = f"import {LIBRARY_NAME} as lm"
 LIBRARY_LOAD_NOTEBOOK_NAME = f"load_{LIBRARY_NAME}"
 
-LIBRARY_LAKEHOUSE = mssparkutils.lakehouse.get(LIBRARY_LAKEHOUSE_NAME)
+LIBRARY_LAKEHOUSE = notebookutils.lakehouse.get(LIBRARY_LAKEHOUSE_NAME)
 
 assert LIBRARY_FOLDER.startswith("/"), "LIBRARY_FOLDER must start with '/'"
 
