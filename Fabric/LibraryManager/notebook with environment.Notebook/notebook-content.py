@@ -16,17 +16,17 @@
 # META           "id": "2925655f-0293-4f32-8bc6-86ab989099a7"
 # META         }
 # META       ]
+# META     },
+# META     "environment": {
+# META       "environmentId": "70983ad4-37e2-8559-43f2-fdb5ea9bf3be",
+# META       "workspaceId": "00000000-0000-0000-0000-000000000000"
 # META     }
 # META   }
 # META }
 
-# MARKDOWN ********************
-
-# # Using LibraryManager to import custom code
-
 # CELL ********************
 
-%run load_LibraryManager
+print("This notebook uses a custom Environment")
 
 # METADATA ********************
 
@@ -37,22 +37,12 @@
 
 # CELL ********************
 
-log(PI)
+# MAGIC %%sql
+# MAGIC SELECT 'This notebook uses a custom Environment'
 
 # METADATA ********************
 
 # META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-display(table_to_df("myTable"))
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
+# META   "language": "sparksql",
 # META   "language_group": "synapse_pyspark"
 # META }

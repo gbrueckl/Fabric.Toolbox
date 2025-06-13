@@ -23,31 +23,9 @@
 # MARKDOWN ********************
 
 # # Fabric Library Manager
-# This notebook allows you to specify a set of notebooks from the current workspace to be bundled into a library. This library is stored in the `/Files` section of a lakehouse. Additionally a new notebook is created in the workspace called `load_LibraryManager` which you can call from main notebook to load the LibraryManager and all its libraries into the current notebook session
-
-# MARKDOWN ********************
-
-# ## Important:
-# After excecuting this notebook to update the LibraryManager, all sessions, that should uses the new version of the LibraryManager, must be restarted!
-
-# CELL ********************
-
-import os
-import base64
-import zipfile
-import time
-import json
-import requests
-
-import notebookutils
-from sempy.fabric import FabricRestClient
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
+# This notebook allows you to specify a set of notebooks from the current workspace to be bundled into a library. This library is stored in the `/Files` section of a lakehouse. Additionally a new notebook is created in the workspace called `load_LibraryManager` which you can call from your other notebooks using `%run` to load the LibraryManager and all its libraries into the current notebook session.
+# 
+# If you change anything in the library notebooks, simply run this LibraryManager notebook again to also update the actual library thats imported in all notebooks.
 
 # CELL ********************
 
@@ -61,6 +39,25 @@ library_notebooks = [
         "library_name": "MyOtherLibrary.py"
     },
 ]
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+import os
+import base64
+import zipfile
+import time
+import json
+import requests
+
+import notebookutils
+from sempy.fabric import FabricRestClient
 
 # METADATA ********************
 

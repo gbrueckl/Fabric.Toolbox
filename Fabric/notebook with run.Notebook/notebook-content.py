@@ -16,17 +16,18 @@
 # META           "id": "2925655f-0293-4f32-8bc6-86ab989099a7"
 # META         }
 # META       ]
-# META     }
+# META     },
+# META     "environment": {}
 # META   }
 # META }
 
 # MARKDOWN ********************
 
-# # Using LibraryManager to import custom code
+# # Using `%run` to import custom code from other notebooks
 
 # CELL ********************
 
-%run load_LibraryManager
+%run MyLibrary
 
 # METADATA ********************
 
@@ -37,7 +38,7 @@
 
 # CELL ********************
 
-log(PI)
+%run MyOtherLibrary
 
 # METADATA ********************
 
@@ -48,7 +49,7 @@ log(PI)
 
 # CELL ********************
 
-display(table_to_df("myTable"))
+# my regular code using imported library functions ...
 
 # METADATA ********************
 
