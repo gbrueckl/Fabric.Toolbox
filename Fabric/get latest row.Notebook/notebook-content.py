@@ -37,12 +37,16 @@
 
 # CELL ********************
 
+import time
 import datetime as dt
 import sempy.fabric as fabric
 
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from pyspark.sql import Window, Row
+
+sc.addPyFile("https://raw.githubusercontent.com/gbrueckl/Fabric.Toolbox/main/DataEngineering/Library/VisualizeExecutionPlan.py")
+from VisualizeExecutionPlan import show_plan
 
 # METADATA ********************
 
@@ -56,10 +60,10 @@ from pyspark.sql import Window, Row
 scale_factor = 10 # 1, 10 or 100
 
 df = spark.sql(f"SELECT * FROM TPCH.sf{scale_factor}_lineitem")
-display(df)
+display(df.limit(100))
 
 group_by_cols = ["OrderId"]
-sorting_cols = ["LineNumber"]
+sorting_cols = ["ExtendedPrice"]
 
 # METADATA ********************
 
@@ -108,10 +112,19 @@ def log(text: str, end: str = None):
 
 # CELL ********************
 
-def evaluate_result(df):
-    log("Simulating write operation ... ")
-    df.write.format("noop").mode("overwrite").save()
-    log("Done!")
+def evaluate_result(df, iterations = 3):
+    durations = []
+    for it in range(1, iterations+1):
+        log(f"Simulating write operation - iteration {it} ... ")
+        start = time.time()
+        df.write.format("noop").mode("overwrite").save()
+        end = time.time()
+        log(f"Done - Duration: {end - start:5.2f} seconds")
+        durations.append(end - start)
+
+    log(f"Total Duration: {sum(durations)/len(durations)}")
+    log(f"Avg. Duration:  {sum(durations)}")
+    log(f"Run Durations:  {durations}")
 
 # read the df once 
 evaluate_result(df)
@@ -134,19 +147,32 @@ log(f"Rowcount: {df.count()}")
 
 # CELL ********************
 
-# MAGIC %%timeit -n 1 -r 3
-# MAGIC # define window, used DESC sort order
-# MAGIC w = Window.partitionBy(group_by_cols).orderBy([F.col(x).desc() for x in sorting_cols])
-# MAGIC 
-# MAGIC #filter DataFrame to only show first row for each group
-# MAGIC df_latest_window = df.withColumn('__row_num__', F.row_number().over(w)).filter(F.col('__row_num__') == 1).drop('__row_num__')
-# MAGIC #display(df_latest_window)
-# MAGIC #show_plan(df_latest_window)
-# MAGIC evaluate_result(df_latest_window)
-# MAGIC 
-# MAGIC # SF1:      
-# MAGIC # SF10:     21.9 s ± 381 ms per loop (mean ± std. dev. of 3 runs, 1 loop each)
-# MAGIC # SF100:    1min 10s ± 18.4 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
+# define window, used DESC sort order
+w = Window.partitionBy(group_by_cols).orderBy([F.col(x).desc() for x in sorting_cols])
+
+#filter DataFrame to only show first row for each group
+df_latest_window = (
+    df.withColumn('__row_num__', F.row_number().over(w))
+    .filter(F.col('__row_num__') == 1)
+    .drop('__row_num__')
+)
+
+evaluate_result(df_latest_window)
+
+# SF1:      
+# SF10:     21.9 s ± 381 ms per loop (mean ± std. dev. of 3 runs, 1 loop each)
+# SF100:    1min 10s ± 18.4 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+show_plan(df_latest_window)
 
 # METADATA ********************
 
@@ -161,18 +187,34 @@ log(f"Rowcount: {df.count()}")
 
 # CELL ********************
 
-# MAGIC %%timeit -n 1 -r 3
-# MAGIC df_latest_dates_per_group = df.groupBy(group_by_cols).agg(*[F.max(x).alias(x) for x in sorting_cols])
-# MAGIC #display(df_latest_dates_per_group)
-# MAGIC 
-# MAGIC df_latest_join = df.alias("base").join(df_latest_dates_per_group, group_by_cols + sorting_cols, "inner").select("base.*")#
-# MAGIC #display(df_latest_join)
-# MAGIC #show_plan(df_latest_join)
-# MAGIC evaluate_result(df_latest_join)
-# MAGIC 
-# MAGIC # SF1:      
-# MAGIC # SF10:     23.9 s ± 1.35 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
-# MAGIC # SF100:    1min 21s ± 4.76 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
+df_latest_dates_per_group = (
+    df.groupBy(group_by_cols)
+    .agg(*[F.max(x).alias(x) for x in sorting_cols])
+)
+#display(df_latest_dates_per_group)
+
+df_latest_join = (
+    df.alias("base")
+    .join(df_latest_dates_per_group, group_by_cols + sorting_cols, "inner")
+    .select("base.*")
+)
+
+evaluate_result(df_latest_join)
+
+# SF1:      
+# SF10:     23.9 s ± 1.35 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
+# SF100:    1min 21s ± 4.76 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+show_plan(df_latest_join)
 
 # METADATA ********************
 
@@ -187,15 +229,29 @@ log(f"Rowcount: {df.count()}")
 
 # CELL ********************
 
-# MAGIC %%timeit -n 1 -r 3
-# MAGIC df_latest_max_struct = df.groupBy(group_by_cols).agg(F.max(F.struct(*sorting_cols + [x for x in df.columns if x not in sorting_cols])).alias("latest")).select("latest.*")
-# MAGIC #display(df_latest_max_struct)
-# MAGIC #show_plan(df_latest_max_struct)
-# MAGIC evaluate_result(df_latest_max_struct)
-# MAGIC 
-# MAGIC # SF1:      
-# MAGIC # SF10:     21.6 s ± 1.5 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
-# MAGIC # SF100:    58.3 s ± 511 ms per loop (mean ± std. dev. of 3 runs, 1 loop each)
+df_latest_max_struct = (
+    df.groupBy(group_by_cols)
+    .agg(F.max(F.struct(*sorting_cols + [x for x in df.columns if x not in sorting_cols])).alias("latest"))
+    .select("latest.*")
+    .select(df.columns) # keep original column order
+)
+
+evaluate_result(df_latest_max_struct)
+
+# SF1:      
+# SF10:     21.6 s ± 1.5 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
+# SF100:    58.3 s ± 511 ms per loop (mean ± std. dev. of 3 runs, 1 loop each)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+show_plan(df_latest_max_struct)
 
 # METADATA ********************
 
@@ -210,15 +266,28 @@ log(f"Rowcount: {df.count()}")
 
 # CELL ********************
 
-# MAGIC %%timeit -n 1 -r 3
-# MAGIC df_latest_max_by = df.groupBy(group_by_cols).agg(F.max_by(F.struct("*"), F.struct(*sorting_cols)).alias("latest")).select("latest.*")
-# MAGIC #display(df_latest_max_struct)
-# MAGIC #show_plan(df_latest_max_struct)
-# MAGIC evaluate_result(df_latest_max_by)
-# MAGIC 
-# MAGIC # SF1:      
-# MAGIC # SF10:     24.4 s ± 5.76 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
-# MAGIC # SF100:    53.5 s ± 1.24 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
+df_latest_max_by = (
+    df.groupBy(group_by_cols)
+    .agg(F.max_by(F.struct("*"), F.struct(*sorting_cols)).alias("latest"))
+    .select("latest.*")
+)
+
+evaluate_result(df_latest_max_by)
+
+# SF1:      
+# SF10:     24.4 s ± 5.76 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
+# SF100:    53.5 s ± 1.24 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+show_plan(df_latest_max_by)
 
 # METADATA ********************
 
@@ -234,14 +303,25 @@ log(f"Rowcount: {df.count()}")
 # CELL ********************
 
 # MAGIC %%timeit -n 1 -r 3
-# MAGIC df_latest_max_by = df.groupBy(group_by_cols).agg(F.max_by(F.struct("*"), sorting_cols[0]).alias("latest")).select("latest.*")
+# MAGIC df_latest_max_by_no_struct = df.groupBy(group_by_cols).agg(F.max_by(F.struct("*"), sorting_cols[0]).alias("latest")).select("latest.*")
 # MAGIC #display(df_latest_max_struct)
 # MAGIC #show_plan(df_latest_max_struct)
-# MAGIC evaluate_result(df_latest_max_by)
+# MAGIC evaluate_result(df_latest_max_by_no_struct)
 # MAGIC 
 # MAGIC # SF1:      
 # MAGIC # SF10:     27.5 s ± 4.28 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
 # MAGIC # SF100:    52.8 s ± 1.21 s per loop (mean ± std. dev. of 3 runs, 1 loop each)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+show_plan(df_latest_max_by_no_struct)
 
 # METADATA ********************
 

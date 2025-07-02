@@ -38,6 +38,10 @@ library_notebooks = [
         "notebook": "MyOtherLibrary",
         "library_name": "MyOtherLibrary.py"
     },
+    {
+        "notebook": "MyFabricSparkLibrary",
+        "library_name": "MyFabricSparkLibrary.py"
+    },
 ]
 
 # METADATA ********************
