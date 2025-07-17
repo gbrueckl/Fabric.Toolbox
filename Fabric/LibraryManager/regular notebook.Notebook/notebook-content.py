@@ -35,16 +35,9 @@
 # META   "language_group": "synapse_pyspark"
 # META }
 
-# CELL ********************
+# MARKDOWN ********************
 
-display(ls("/"))
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
+# # Use log() function and PI constant from library
 
 # CELL ********************
 
@@ -57,9 +50,43 @@ log(PI)
 # META   "language_group": "synapse_pyspark"
 # META }
 
+# MARKDOWN ********************
+
+# # Use library function that uses `notebookutils` under the hood
+
+# CELL ********************
+
+display(ls("/"))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# # Use library function that uses Spark under the hood
+
 # CELL ********************
 
 display(table_to_df("myTable"))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# # Use nested library function 
+
+# CELL ********************
+
+print(get_circumference(8))
 
 # METADATA ********************
 

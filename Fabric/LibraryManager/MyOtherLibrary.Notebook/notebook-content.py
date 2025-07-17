@@ -34,6 +34,37 @@ import datetime as dt
 
 # CELL ********************
 
+# when called via sc.addPyFile can import other libraries as well using the syntax below
+if _is_sc_addPyFile:
+    from .MyLibrary import PI
+else:
+    # for debugging we need to define the variables here
+    PI = 123
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+def get_circumference(radius):
+    return 2*radius*PI
+
+if not _is_sc_addPyFile:
+    print(get_circumference(1))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
 def log(text: str, end: str = None):
   print(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\t" + str(text), end = end)
 
