@@ -16,17 +16,18 @@
 # META           "id": "2925655f-0293-4f32-8bc6-86ab989099a7"
 # META         }
 # META       ]
-# META     }
+# META     },
+# META     "environment": {}
 # META   }
 # META }
 
 # MARKDOWN ********************
 
-# # Using LibraryManager to import custom code
+# # Using `%run` to import custom code from other notebooks
 
 # CELL ********************
 
-%run load_LibraryManager
+%run MyLibrary
 
 # METADATA ********************
 
@@ -35,13 +36,9 @@
 # META   "language_group": "synapse_pyspark"
 # META }
 
-# MARKDOWN ********************
-
-# # Use log() function and PI constant from library
-
 # CELL ********************
 
-log(PI)
+%run MyOtherLibrary
 
 # METADATA ********************
 
@@ -50,43 +47,9 @@ log(PI)
 # META   "language_group": "synapse_pyspark"
 # META }
 
-# MARKDOWN ********************
-
-# # Use library function that uses `notebookutils` under the hood
-
 # CELL ********************
 
-display(ls("/"))
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# MARKDOWN ********************
-
-# # Use library function that uses Spark under the hood
-
-# CELL ********************
-
-display(table_to_df("myTable"))
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# MARKDOWN ********************
-
-# # Use nested library function 
-
-# CELL ********************
-
-print(get_circumference(8))
+# my regular code using imported library functions ...
 
 # METADATA ********************
 
