@@ -23,11 +23,6 @@ def get_execution_plan(df: DataFrame, extended: bool = None, mode: str = None) -
 
     Returns:
         The execution plan printed by Spark.
-
-    Note:
-        This function modifies the session-level Spark configuration settings
-        ``spark.sql.maxPlanStringLength`` and
-        ``spark.sql.debug.maxToStringFields``.
     """
     with contextlib.redirect_stdout(io.StringIO()) as stdout:
         df.explain(extended = extended, mode = mode)
