@@ -30,8 +30,6 @@ def get_execution_plan(df: DataFrame, extended: bool = None, mode: str = None) -
         ``spark.sql.debug.maxToStringFields``.
     """
     with contextlib.redirect_stdout(io.StringIO()) as stdout:
-        spark.conf.set("spark.sql.maxPlanStringLength", 100000)
-        spark.conf.set("spark.sql.debug.maxToStringFields", 1000)
         df.explain(extended = extended, mode = mode)
 
         plan = stdout.getvalue()
@@ -133,10 +131,18 @@ def get_source_tables(
     namespaces = set([d["namespace"] for d in dependencies])
 
     for namespace in namespaces:
-        namespace_info = df.sparkSession.sql(f"DESCRIBE DATABASE {namespace}").filter("info_name = 'Namespace Name'").first()
+        namespace_info = {row["info_name"]: row["info_value"] for row in df.sparkSession.sql(f"DESCRIBE DATABASE {namespace}").collect()}
         # remove the workspace name and quotes
-        parts = [p.strip('`') for p in namespace_info["info_value"].split("`.`")]
-        namespace_mapping[namespace] = dict(list(zip(["workspace", "lakehouse", "schema"], parts))[array_start:])
+        parts = [p.strip('`') for p in namespace_info["Namespace Name"].split("`.`")]
+        if len(parts) == 1: # for non-schema-enabled lakehouses we need to derive the workspace from the onelake location
+            workspace = fabric.resolve_workspace_name(namespace_info["Location"][8:44])
+            namespace_mapping[namespace] = {
+                "workspace": workspace,
+                "lakehouse": namespace_info["Namespace Name"],
+                "schema": "dbo", # always "dbo" for non-schema-enabled lakehouses
+            }
+        else:
+            namespace_mapping[namespace] = dict(list(zip(["workspace", "lakehouse", "schema"], parts))[array_start:])
 
     source_tables = []
     for d in dependencies:
@@ -146,7 +152,7 @@ def get_source_tables(
         return source_tables
     else:
         return [
-            ".".join(f"`{st[key]}`" for key in ("workspace", "lakehouse", "schema", "table"))
+            ".".join(f"`{v}`" for v in st.values())
             for st in source_tables
         ]
 
